@@ -1,0 +1,14 @@
+version: 2
+jobs:
+  hello:
+    docker:
+      - image: alpine
+    steps:
+      - run:
+          command: |
+            echo "Hello CI!”
+workflows:
+  version: 2
+  example-workflow:
+    jobs:
+      - hello
