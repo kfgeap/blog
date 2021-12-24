@@ -1,0 +1,63 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/blog/app
+    docker:
+      - image: cimg/node:14.18.2
+    steps:
+      - checkout:
+          path: ~/blog
+      - restore_cache:
+          keys:
+            - yarn-{{ checksum "package.json" }}
+      - run:
+          command: |
+            [ ! -d "node_modules" ] && yarn install
+            yarn md
+            yarn run ts-node posts_edit.ts
+            yarn generate
+  test:
+    working_directory: ~/blog/app
+    docker:
+      - image: cimg/node:14.18.2
+    steps:
+      - checkout:
+          path: ~/blog
+      - restore_cache:
+          keys:
+            - yarn-{{ checksum "package.json" }}
+      - run:
+          command: |
+            [ ! -d "node_modules" ] && yarn install
+            yarn test
+  deploy-gh-pages:
+    working_directory: ~/blog/app
+    docker:
+      - image: cimg/node:14.18.2
+    steps:
+      - checkout:
+          path: ~/blog
+      - restore_cache:
+          keys:
+            - yarn-{{ checksum "package.json" }}
+      - run:
+          command: |
+            chmod +x ./deploy_gh_pages.sh
+      - run:
+          name: change env and deploy
+          command: |
+            mv ./dotenv/.env.ghpages ./.env
+            ./deploy_gh_pages.sh
+workflows:
+  version: 2
+  build-and-test:
+    jobs:
+      - build
+      - test
+  deploy:
+    jobs:
+      - deploy-gh-pages:
+          filters:
+            branches:
+              only:
+                - gh_pages
