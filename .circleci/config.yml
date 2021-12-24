@@ -12,3 +12,19 @@ workflows:
   example-workflow:
     jobs:
       - hello
+build:
+  working_directory: ~/blog/app
+  docker:
+    - image: cimg/node:14.18.2
+  steps:
+    - checkout:
+        path: ~/blog
+    - restore_cache:
+        keys:
+          - yarn-{{ checksum "package.json" }}
+    - run:
+        command: |
+          [ ! -d "node_modules" ] && yarn install
+          yarn md
+          yarn run ts-node posts_edit.ts
+          yarn generate
